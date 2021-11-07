@@ -54,19 +54,16 @@ export default function usePaymentCard({
   }, []); // eslint-disable-line
 
   const setInputTouched = React.useCallback((input, value) => {
-    requestAnimationFrame(() => {
-      if (document.activeElement.tagName !== 'INPUT') {
-        setIsTouched(true);
-      } else if (value === false) {
-        setIsTouched(false);
-      }
-    });
-
     setTouchedInputs(touchedInputs => {
       if (touchedInputs[input] === value) return touchedInputs;
 
       const newTouchedInputs = { ...touchedInputs, [input]: value };
       onTouch && onTouch({ [input]: value }, newTouchedInputs);
+      if (Object.values(newTouchedInputs).includes(true)) {
+        setIsTouched(true);
+      } else {
+        setIsTouched(false);
+      }
       return newTouchedInputs;
     });
   }, []); // eslint-disable-line
@@ -271,6 +268,7 @@ export default function usePaymentCard({
   const handleBlurCVC = React.useCallback(
     (props = {}) => {
       return e => {
+        console.log('handleBlurCVC', handleBlurCVC);
         props.onBlur && props.onBlur(e);
         onBlur && onBlur(e);
         setFocused(undefined);
@@ -283,6 +281,7 @@ export default function usePaymentCard({
   const handleChangeCVC = React.useCallback(
     (props = {}, { cardType } = {}) => {
       return e => {
+        console.log('handle handleChangeCVC');
         const cvc = e.target.value;
 
         setInputTouched('cvc', false);
@@ -292,7 +291,13 @@ export default function usePaymentCard({
 
         const cvcError = utils.validator.getCVCError(cvc, cvcValidator, { cardType, errorMessages });
         if (!cvcError && autoFocus) {
-          zipField.current && zipField.current.focus();
+          console.log('zipField', zipField);
+          if (zipField.current) {
+            zipField.current.focus();
+          } else {
+            console.log('lets blur');
+            e.target.blur();
+          }
         }
         setInputError('cvc', cvcError);
         props.onError && props.onError(cvcError);
